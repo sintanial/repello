@@ -92,12 +92,26 @@ Engine.prototype.moveRack = function (rack, coord) {
 
   if (rack.coord[0] == coord[0]) {
     // идём по вертикали
-    for (var i = 0; i < 6; i++) {
-      var map = this.map[Math.abs(coord[0] - i)];
-      if (map.dib || map.rack) throw new Error('invalid coord move, barrier')
+    var moves = [];
+    for (var j = 0; j < length; j++) {
+      if (down) {
+        var step = coord[0] + j;
+      } else {
+        var step = Math.abs(coord[0] - j);
+      }
+      var map = this.map[step];
+      moves.push([step, coord[1]]);
+      if (map.dib || map.rack) throw new Error('invalid coord move, barrier');
     }
+
+    rack.coord = [moves[moves.length - 1]];
+
+    return moves;
   } else if (rack.coord[1] == coord[1]) {
     // идём по горизонтали
+    for (var i = 0; i < length; i++) {
+
+    }
   } else {
     // идём по диагонали
   }
