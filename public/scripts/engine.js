@@ -13,6 +13,7 @@ EngineError.BUSY_POINT = 1;
 EngineError.CHIPS_ENDED = 2;
 EngineError.POINT_NOT_IN_RACK_ARIA = 3;
 EngineError.POINT_NO_CONFLICTS = 4;
+EngineError.TARGET_NO_CONFLICTED_WITH_POINT = 5;
 
 function Engine() {
   this.map = new Map();
@@ -28,7 +29,7 @@ Engine.prototype.putRack = function (rack, coord) {
     );
   }
 
-  var point = this.map[coord[0]][coord[1]];
+  var point = this.map.get(coord);
 
   if (point.isBusy()) {
     throw new EngineError(
@@ -39,6 +40,7 @@ Engine.prototype.putRack = function (rack, coord) {
   }
 
   rack.coord = coord;
+  point.setRack(rack);
 
   this.racks[rack.color] = rack;
 };
@@ -66,10 +68,10 @@ Engine.prototype.moveRack = function (rack, movePoint) {
   // начальные координаты
   var vstep = start[0], hstep = start[1];
   // направление шага
-  var vdirect = Math.sign(movePoint[0] - start[0]), hdirect = Math.sign(movePoint[1] - start[1]);
+  var vdirect = Math.sign(movePoint.coord[0] - start[0]), hdirect = Math.sign(movePoint.coord[1] - start[1]);
 
   // кол-во шагов
-  var stepCount = this.map[movePoint[0]][movePoint[1]].num;
+  var stepCount = movePoint.num;
 
   // логи шагов
   var steps = [];
@@ -80,7 +82,7 @@ Engine.prototype.moveRack = function (rack, movePoint) {
     vstep += vdirect;
     if (vstep <= 0 || vstep >= this.map.length - 1) vdirect *= -1;
 
-    var stepPoint = this.map[vstep][hstep];
+    var stepPoint = this.map.get(vstep, hstep);
     if (stepPoint.isBusy()) {
       throw new EngineError(
         'Point: {coord} is busy'.format(stepPoint.coord),
@@ -94,11 +96,11 @@ Engine.prototype.moveRack = function (rack, movePoint) {
 
   rack.pickChips();
 
-  var startPoint = this.map[start[0]][start[1]];
-  var endPoint = this.map[vstep][hstep];
+  var startPoint = this.map.get(start);
+  var endPoint = this.map.get(vstep, hstep);
 
+  endPoint.setRack(startPoint.removeRack(rack));
   startPoint.setChip(Point.TYPE.BLACK);
-  endPoint.setRack(rack);
 
   this.checkConflicts(startPoint);
   this.checkConflicts(endPoint);
@@ -108,27 +110,27 @@ Engine.prototype.moveRack = function (rack, movePoint) {
 
 Engine.prototype.checkConflicts = function (point) {
   var coord = point.coord;
-  for (var i = coord[0] - 1; i < coord[0] + 1; i++) {
-    for (var j = coord[1] - 1; j < coord[1] + 1; j++) {
-      if (i != coord[0] && j != coord[1]) continue;
+  for (var i = coord[0] - 1; i <= coord[0] + 1; i++) {
+    for (var j = coord[1] - 1; j <= coord[1] + 1; j++) {
+      if (i == coord[0] && j == coord[1]) continue;
 
-      var p = this.map[i][j];
+      var p = this.map.get(i, j);
       if (p.isBusy()) {
         point.addConflict(p);
         p.addConflict(point);
+
+        this.conflicts++;
       }
     }
   }
-
-  this.conflicts += point.conflicts.length;
 };
 
-Engine.prototype.solveConflict = function (conflictPoint, movePoint) {
-  if (!conflictPoint.isConflictable()) {
+Engine.prototype.solveConflict = function (targetPoint, movePoint) {
+  if (!targetPoint.isConflictable()) {
     throw new EngineError(
-      "Point {coord} has't conflicts".format(conflictPoint.coord),
+      "Point {coord} has't conflicts".format(targetPoint.coord),
       EngineError.POINT_NO_CONFLICTS,
-      {conflictPoint: conflictPoint, movePoint: movePoint}
+      {conflictPoint: targetPoint, movePoint: movePoint}
     );
   }
 
@@ -136,16 +138,47 @@ Engine.prototype.solveConflict = function (conflictPoint, movePoint) {
     throw new EngineError(
       "Point to move {coord} is busy".format(movePoint.coord),
       EngineError.BUSY_POINT,
-      {conflictPoint: conflictPoint, movePoint: movePoint}
+      {conflictPoint: targetPoint, movePoint: movePoint}
     );
   }
-  var confCoord = conflictPoint.coord;
+
+
+  var chipCoord = targetPoint.coord;
   var moveCoord = movePoint.coord;
 
-  var vdirect = Math.sign(moveCoord[0] - confCoord[0]), hdirect = Math.sign(moveCoord[1] - confCoord[1]);
+  var vdirect = Math.sign(moveCoord[0] - chipCoord[0]), hdirect = Math.sign(moveCoord[1] - chipCoord[1]);
 
+  var confPoint = this.map.get(chipCoord[0] + (-1) * vdirect, chipCoord[1] + (-1) * hdirect);
+  if (!targetPoint.isInConflict(confPoint)) {
+    throw new EngineError(
+      "Target {target.coord}, has no conflict with Point {point.coord}".format(chipCoord, confPoint.coord),
+      EngineError.TARGET_NO_CONFLICTED_WITH_POINT,
+      {targetPoint: targetPoint, conflictPoint: confPoint, movePoint: movePoint}
+    )
+  }
+
+  targetPoint.clearConflict(confPoint);
+
+  if (!!targetPoint.chip) {
+    movePoint.setChip(targetPoint.removeChip());
+  } else {
+    movePoint.setRack(targetPoint.removeRack());
+  }
+  this.conflicts--;
+
+  this.checkConflicts(movePoint);
+
+  return movePoint;
 };
 
 Engine.prototype.isPointInRackArea = function (rack, point) {
-  return (Math.abs(rack.coord[0] - point.coord[0]) == 1 && Math.abs(rack.coord[1] - point.coord[1]) == 1);
+  var i = Math.abs(rack.coord[0] - point.coord[0]);
+  var j = Math.abs(rack.coord[1] - point.coord[1]);
+
+  return (i == 1 && j == 1) || (i == 1 && j == 0) || (i == 0 && j == 1);
 };
+
+
+//Engine.prototype.isPointInRackArea = function (rack, point) {
+//  return (Math.abs(rack.coord[0] - point.coord[0]) == 1 && Math.abs(rack.coord[1] - point.coord[1]) == 1);
+//};

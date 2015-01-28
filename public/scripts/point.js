@@ -12,15 +12,23 @@ Point.prototype.isBusy = function () {
 };
 
 Point.prototype.setChip = function (chip) {
-  this.map.emit('set:chip', chip);
-
   this.chip = chip;
 };
 
-Point.prototype.setRack = function (rack) {
-  this.map.emit('set:rack', rack);
+Point.prototype.removeChip = function () {
+  var chip = this.chip;
+  this.chip = null;
+  return chip;
+};
 
+Point.prototype.setRack = function (rack) {
   this.rack = rack;
+};
+
+Point.prototype.removeRack = function () {
+  var rack = this.rack;
+  this.rack = null;
+  return rack;
 };
 
 Point.prototype.clear = function () {
@@ -29,7 +37,9 @@ Point.prototype.clear = function () {
 };
 
 Point.prototype.addConflict = function (point) {
-  this.conflicts.push(point);
+  if (!this.isInConflict(point)) {
+    this.conflicts.push(point);
+  }
 };
 
 Point.prototype.removeConflict = function (point) {
@@ -48,6 +58,13 @@ Point.prototype.isInConflict = function (point) {
 
 Point.prototype.isConflictable = function () {
   return !!this.conflicts.length;
+};
+Point.prototype.clearConflict = function () {
+  for (var i = 0; i < this.conflicts.length; i++) {
+    this.conflicts[i].removeConflict(this);
+  }
+
+  this.conflicts = [];
 };
 
 Point.TYPE = {

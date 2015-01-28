@@ -34,13 +34,13 @@ function Map() {
   map[11][11].chip = Point.TYPE.BLACK;
 
   this.matrix = map;
+  this.length = map.length;
 }
+
+inherit(Map, EventEmitter);
 
 Map.prototype.get = function (coord) {
   if (!Array.isArray(coord)) coord = [].slice.call(arguments);
 
   return this.matrix[coord[0]][coord[1]];
 };
-
-
-inherit(Map, EventEmitter);
