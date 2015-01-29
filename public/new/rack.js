@@ -8,8 +8,11 @@ function Rack(tokens, color) {
 inherit(Rack, Operand);
 
 Rack.prototype.pickToken = function () {
-  if (this.isEnoughTokens()) return false;
-  return --this.tokens;
+  if (!this.isEnoughTokens()) return null;
+
+  this.tokens--;
+
+  return new Token(Token.TYPE.BLACK);
 };
 
 Rack.prototype.isEnoughTokens = function () {

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+  <meta charset="UTF-8">
+  <title></title>
+  <script src="util.js"></script>
+  <script src="event.js"></script>
+
+  <script src="operand.js"></script>
+  <script src="token.js"></script>
+  <script src="rack.js"></script>
+  <script src="point.js"></script>
+  <script src="map.js"></script>
+  <script src="error.js"></script>
+  <script src="engine.js"></script>
+
+  <style>
+    tr, td {
+      width: 20px;
+      height: 20px;
+      text-align: center;
+      vertical-align: middle;
+    }
+  </style>
+
+  <script>
+    function mapRender(map) {
+      return function () {
+        var table = document.getElementById('map');
+
+        table.innerHTML = "";
+
+        for (var i = 0; i < map.length; i++) {
+
+          var tr = document.createElement('tr');
+          for (var j = 0; j < map.length; j++) {
+
+            var td = document.createElement('td');
+            var point = map.get(i, j);
+
+            if (point.isBusy()) {
+              var operand = point.operand;
+              if (operand instanceof Rack) {
+                td.style.color = "red";
+                td.innerHTML = 'R';
+              } else {
+                if (operand.type == Token.TYPE.GOLD) {
+                  td.style.color = "gold";
+                } else if (operand.type == Token.TYPE.SILVER) {
+                  td.style.color = "silver";
+                } else {
+                  td.style.color = "black";
+                  td.style.fontWeight = "bold";
+                }
+                td.innerHTML = 'T';
+              }
+
+              if (operand.hasConflicts()) {
+                td.style.backgroundColor = "orange";
+              }
+            } else {
+              td.innerHTML = point.num;
+            }
+
+            tr.appendChild(td);
+          }
+          table.appendChild(tr);
+        }
+      }
+    }
+
+    function timeoutRender() {
+      var fns = [].slice.call(arguments);
+
+      setTimeout(function () {
+        fns[0]();
+        fns.shift();
+        if (fns.length) timeoutRender.apply(window, fns);
+      }, 4000);
+    }
+
+  </script>
+
+</head>
+<body>
+
+<table id="map"></table>
+
+<script>
+  var map = new Map();
+  var engine = new Engine(map);
+
+  var redRack = new Rack(10, 'red');
+  var greenRack = new Rack(10, 'green');
+
+  var render = mapRender(map);
+
+  render();
+
+  timeoutRender(
+    function () {
+      engine.putRack(redRack, map.get(5, 4));
+      render();
+    },
+    function () {
+      engine.moveRack(redRack, map.get(5, 5));
+      render();
+    },
+    function () {
+      engine.solveConflict(map.get(5, 5).operand, map.get(4, 4));
+      render();
+    },
+    function () {
+      engine.solveConflict(map.get(5, 4).operand, map.get(6, 4));
+      render();
+    },
+    function () {
+      engine.putRack(greenRack, map.get(4, 7));
+      render();
+    },
+    function () {
+      engine.moveRack(greenRack, map.get(5, 6));
+      render();
+    },
+    function () {
+      engine.solveConflict(map.get(6, 6).operand, map.get(6, 7));
+      render();
+    },
+    function () {
+      engine.solveConflict(map.get(6, 5).operand, map.get(6, 6));
+      render();
+    },
+    function () {
+      engine.solveConflict(map.get(6, 7).operand, map.get(6, 8));
+      render();
+    }
+  );
+</script>
+</body>
+</html>

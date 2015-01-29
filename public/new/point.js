@@ -17,10 +17,14 @@ Point.prototype.isBusy = function () {
 
 Point.prototype.setOperand = function (operand) {
   this.operand = operand;
+  operand.setPoint(this);
 };
 
 Point.prototype.removeOperand = function () {
   var operand = this.operand;
+  operand.removePoint();
+
   this.operand = null;
+
   return operand;
 };

@@ -21,19 +21,20 @@ function Map() {
     }
   }
 
-  map[0][1].setOperand(Token.TYPE.BLACK);
-  map[0][6].setOperand(Token.TYPE.SILVER);
-  map[0][11].setOperand(Token.TYPE.BLACK);
+  map[0][1].setOperand(new Token(Token.TYPE.BLACK));
+  map[0][6].setOperand(new Token(Token.TYPE.SILVER));
+  map[0][11].setOperand(new Token(Token.TYPE.BLACK));
 
-  map[6][1].setOperand(Token.TYPE.SILVER);
-  map[6][6].setOperand(Token.TYPE.GOLD);
-  map[6][11].setOperand(Token.TYPE.SILVER);
+  map[6][1].setOperand(new Token(Token.TYPE.SILVER));
+  map[6][6].setOperand(new Token(Token.TYPE.GOLD));
+  map[6][11].setOperand(new Token(Token.TYPE.SILVER));
 
-  map[11][1].setOperand(Token.TYPE.BLACK);
-  map[11][6].setOperand(Token.TYPE.SILVER);
-  map[11][11].setOperand(Token.TYPE.BLACK);
+  map[11][1].setOperand(new Token(Token.TYPE.BLACK));
+  map[11][6].setOperand(new Token(Token.TYPE.SILVER));
+  map[11][11].setOperand(new Token(Token.TYPE.BLACK));
 
   this.matrix = map;
+  this.length = map.length;
 }
 
 inherit(Map, EventEmitter);

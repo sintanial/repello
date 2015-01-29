@@ -23,6 +23,7 @@ Point.prototype.removeChip = function () {
 
 Point.prototype.setRack = function (rack) {
   this.rack = rack;
+  this.rack.setPoint(this);
 };
 
 Point.prototype.removeRack = function () {

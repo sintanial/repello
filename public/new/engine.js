@@ -1,37 +1,35 @@
 function Engine(map) {
   this.map = map;
-  this.racks = {};
+  this.racks = [];
 }
 
 /**
  * Устанавливает стойку на карту
  *
  * @param rack
- * @param coord
+ * @param point
  */
-Engine.prototype.putRack = function (rack, coord) {
-  if (this.racks[rack.color]) {
+Engine.prototype.putRack = function (rack, point) {
+
+  if (this.racks.indexOf(rack) !== -1) {
     throw new EngineError(
-      'Rack ' + rack.color + ' already in the game',
+      'Rack {rack} already in the game'.format(rack),
       EngineError.RACK_ALREADY_IN_GAME,
-      {rack: rack, coord: coord}
+      {rack: rack, point: point}
     );
   }
 
-  var point = this.map.get(coord);
-
   if (point.isBusy()) {
     throw new EngineError(
-      'Point: {coord} is busy'.format(point.coord),
+      'Point {point} is busy'.format(point),
       EngineError.BUSY_POINT,
       {rack: rack, point: point}
     );
   }
 
-  rack.coord = coord;
-  point.setRack(rack);
+  point.setOperand(rack);
 
-  this.racks[rack.color] = rack;
+  this.racks.push(rack);
 };
 
 /**
@@ -44,8 +42,8 @@ Engine.prototype.putRack = function (rack, coord) {
 Engine.prototype.moveRack = function (rack, movePoint) {
   if (!rack.isEnoughTokens()) {
     throw new EngineError(
-      'Not enough chips for point: {point}'.format(movePoint),
-      EngineError.CHIPS_ENDED,
+      'Not enough tokens for point {point}'.format(movePoint),
+      EngineError.TOKEN_ENDED,
       {rack: rack, movePoint: movePoint}
     )
   }
@@ -59,18 +57,18 @@ Engine.prototype.moveRack = function (rack, movePoint) {
   }
 
   // стартовая позиция стойки
-  var start = rack.coord;
+  var rackPoint = rack.point;
 
   // начальные координаты
-  var vstep = start[0], hstep = start[1];
+  var vstep = rackPoint.x, hstep = rackPoint.y;
   // направление шага
-  var vdirect = Math.sign(movePoint.coord[0] - start[0]), hdirect = Math.sign(movePoint.coord[1] - start[1]);
+  var vdirect = Math.sign(movePoint.x - rackPoint.x), hdirect = Math.sign(movePoint.y - rackPoint.y);
 
   // кол-во шагов
   var stepCount = movePoint.num;
 
   // логи шагов
-  var steps = [];
+  var rackSteps = [];
   for (var i = 0; i < stepCount; i++) {
     hstep += hdirect;
     if (hstep <= 0 || hstep >= this.map.length - 1) hdirect *= -1;
@@ -79,48 +77,50 @@ Engine.prototype.moveRack = function (rack, movePoint) {
     if (vstep <= 0 || vstep >= this.map.length - 1) vdirect *= -1;
 
     var stepPoint = this.map.get(vstep, hstep);
+
     if (stepPoint.isBusy()) {
       throw new EngineError(
-        'Point: {coord} is busy'.format(stepPoint.coord),
+        'Point {coord} is busy'.format(stepPoint),
         EngineError.BUSY_POINT,
-        {rack: rack, movePoint: movePoint, busyPoint: stepPoint, steps: steps}
+        {rack: rack, movePoint: movePoint, busyPoint: stepPoint, steps: rackSteps}
       );
     }
 
-    steps.push(stepPoint);
+    rackSteps.push(stepPoint);
   }
 
-  rack.pickChips();
+  var token = rack.pickToken();
 
-  var startPoint = this.map.get(start);
   var endPoint = this.map.get(vstep, hstep);
 
-  endPoint.setRack(startPoint.removeRack(rack));
-  startPoint.setChip(Point.TYPE.BLACK);
+  endPoint.setOperand(rackPoint.removeOperand());
+  rackPoint.setOperand(token);
 
-  this.checkConflicts(startPoint);
-  this.checkConflicts(endPoint);
+  this.checkConflicts(token);
+  this.checkConflicts(rack);
 
-  return steps;
+  return rackSteps;
 };
 
 /**
  * Проверяет конфликты
  *
- * @param point
+ * @param operand
  */
-Engine.prototype.checkConflicts = function (point) {
-  var coord = point.coord;
-  for (var i = coord[0] - 1; i <= coord[0] + 1; i++) {
-    for (var j = coord[1] - 1; j <= coord[1] + 1; j++) {
-      if (i == coord[0] && j == coord[1]) continue;
+Engine.prototype.checkConflicts = function (operand) {
+  var point = operand.point;
+  for (var i = point.x - 1; i <= point.x + 1; i++) {
+    for (var j = point.y - 1; j <= point.y + 1; j++) {
+      if (i == point.x && j == point.y) continue;
 
-      var p = this.map.get(i, j);
-      if (p.isBusy()) {
-        point.addConflict(p);
-        p.addConflict(point);
+      var conflictPoint = this.map.get(i, j);
+      if (conflictPoint.isBusy()) {
+        var conflictOperand = conflictPoint.operand;
 
-        this.conflicts++;
+        operand.addConflict(conflictOperand);
+        conflictOperand.addConflict(operand);
+
+        this.conflicts++; // TODO: доделать
       }
     }
   }
@@ -130,54 +130,48 @@ Engine.prototype.checkConflicts = function (point) {
 /**
  * Решает конфликты
  *
- * @param targetPoint
+ * @param operand
  * @param movePoint
  * @returns {*}
  */
-Engine.prototype.solveConflict = function (targetPoint, movePoint) {
-  if (!targetPoint.isConflictable()) {
+Engine.prototype.solveConflict = function (operand, movePoint) {
+
+  if (!operand.hasConflicts()) {
     throw new EngineError(
-      "Point {coord} has't conflicts".format(targetPoint.coord),
+      "Point {coord} has't conflicts".format(operand),
       EngineError.POINT_NO_CONFLICTS,
-      {conflictPoint: targetPoint, movePoint: movePoint}
+      {operand: operand, movePoint: movePoint}
     );
   }
 
   if (movePoint.isBusy()) {
     throw new EngineError(
-      "Point to move {coord} is busy".format(movePoint.coord),
+      "Point to move {coord} is busy".format(movePoint),
       EngineError.BUSY_POINT,
-      {conflictPoint: targetPoint, movePoint: movePoint}
+      {operand: operand, movePoint: movePoint}
     );
   }
 
 
-  var chipCoord = targetPoint.coord;
-  var moveCoord = movePoint.coord;
+  var operandPoint = operand.point;
 
-  var vdirect = Math.sign(moveCoord[0] - chipCoord[0]), hdirect = Math.sign(moveCoord[1] - chipCoord[1]);
+  var vdirect = Math.sign(movePoint.x - operandPoint.x), hdirect = Math.sign(movePoint.y - operandPoint.y);
 
-  var confPoint = this.map.get(chipCoord[0] + (-1) * vdirect, chipCoord[1] + (-1) * hdirect);
-  if (!targetPoint.isInConflict(confPoint)) {
+  var conflictOperand = this.map.get(operandPoint.x + (-1) * vdirect, operandPoint.y + (-1) * hdirect).operand;
+  if (!operand.isConflictOperand(conflictOperand)) {
     throw new EngineError(
-      "Target {target.coord}, has no conflict with Point {point.coord}".format(chipCoord, confPoint.coord),
+      "Moved operand {move.operand}, has no conflict with operand {point.operand}".format(operand, conflictOperand),
       EngineError.TARGET_NO_CONFLICTED_WITH_POINT,
-      {targetPoint: targetPoint, conflictPoint: confPoint, movePoint: movePoint}
+      {operand: operand, conflictOperand: conflictOperand, movePoint: movePoint}
     )
   }
 
-  targetPoint.clearConflict(confPoint);
+  operand.clearConflicts();
 
-  if (!!targetPoint.chip) {
-    movePoint.setChip(targetPoint.removeChip());
-  } else {
-    movePoint.setRack(targetPoint.removeRack());
-  }
-  this.conflicts--;
+  movePoint.setOperand(operandPoint.removeOperand());
+  this.conflicts--; // TODO: доделать
 
-  this.checkConflicts(movePoint);
-
-  return movePoint;
+  this.checkConflicts(operand);
 };
 
 
@@ -188,8 +182,8 @@ Engine.prototype.solveConflict = function (targetPoint, movePoint) {
  * @returns {boolean}
  */
 Engine.prototype.isPointInRackArea = function (rack, point) {
-  var i = Math.abs(rack.coord[0] - point.coord[0]);
-  var j = Math.abs(rack.coord[1] - point.coord[1]);
+  var i = Math.abs(rack.point.x - point.x);
+  var j = Math.abs(rack.point.y - point.y);
 
   return (i == 1 && j == 1) || (i == 1 && j == 0) || (i == 0 && j == 1);
 };

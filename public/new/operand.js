@@ -7,6 +7,9 @@ extend(Operand.prototype, {
   setPoint: function (point) {
     this.point = point;
   },
+  removePoint: function () {
+    this.point = null;
+  },
   addConflict: function (operand) {
     if (!this.isConflictOperand(operand)) this.conflicts.push(operand);
   },
