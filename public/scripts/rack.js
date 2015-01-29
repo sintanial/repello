@@ -5,10 +5,13 @@ function Rack(chips, color) {
 }
 
 Rack.prototype.pickChips = function () {
-  if (this.isEnoughChips()) return false;
+  if (this.isEnoughTokens()) return false;
   return --this.chips;
 };
 
-Rack.prototype.isEnoughChips = function () {
+Rack.prototype.isEnoughTokens = function () {
   return this.chips > 0;
 };
+
+
+inherit(Rack, Operand);
