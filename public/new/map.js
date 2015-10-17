@@ -21,9 +21,9 @@ function Map() {
     }
   }
 
-  map[0][1].setOperand(new Token(Token.TYPE.BLACK));
-  map[0][6].setOperand(new Token(Token.TYPE.SILVER));
-  map[0][11].setOperand(new Token(Token.TYPE.BLACK));
+  map[1][1].setOperand(new Token(Token.TYPE.BLACK));
+  map[1][6].setOperand(new Token(Token.TYPE.SILVER));
+  map[1][11].setOperand(new Token(Token.TYPE.BLACK));
 
   map[6][1].setOperand(new Token(Token.TYPE.SILVER));
   map[6][6].setOperand(new Token(Token.TYPE.GOLD));
