@@ -1,0 +1,188 @@
+$field_size : 1000 px;
+$count_item : 13 px;
+// field styles---------------------------------------------------------
+@mixin gradient_top_bottom ($center_color, $middle_color) {
+  background: rgb(37, 35, 30); /* Old browsers */
+  background: -moz-linear-gradient(top, #25231e 0%, $middle_color 30%, $center_color 50%, $middle_color 70%, #25231e 100%); // FF3.6+
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #25231e), color-stop(30%, $middle_color), color-stop(51%, $center_color), color-stop(70%, $middle_color), color-stop(100%, #25231e)); // Chrome,Safari4+
+  background: -webkit-linear-gradient(top, #25231e 0%, $middle_color 30%, $center_color 50%, $middle_color 70%, #25231e 100%); // Chrome10+,Safari5.1+
+  background: -o-linear-gradient(top, #25231e 0%, $middle_color 30%, $center_color 50%,$middle_color 70%, #25231e 100%); // Opera 11.10+
+  background: -ms-linear-gradient(top, #25231e 0%, $middle_color 30%, $center_color 50%, $middle_color 70%, #25231e 100%); // IE10+
+  background: linear-gradient(to bottom, #25231e 0%, $middle_color 30%, $center_color 50%, $middle_color 70%, #25231e 100%); // W3C
+}
+@mixin gradient_left_right ($center_color, $middle_color) {
+  background: rgb(37, 35, 30); /* Old browsers */
+  background: -moz-linear-gradient(left, #25231e 0%, $middle_color 30%, $center_color 50%, $middle_color 70%, #25231e 100%); // FF3.6+
+  background: -webkit-gradient(linear, left top, right top, color-stop(0%, #25231e), color-stop(30%, $middle_color), color-stop(51%, $center_color), color-stop(70%, $middle_color), color-stop(100%, #25231e)); // Chrome,Safari4+
+  background: -webkit-linear-gradient(left, #25231e 0%, $middle_color 30%, $center_color 50%, $middle_color 70%, #25231e 100%); // Chrome10+,Safari5.1+
+  background: -o-linear-gradient(left, #25231e 0%, $middle_color 30%, $center_color 50%,$middle_color 70%, #25231e 100%); // Opera 11.10+
+  background: -ms-linear-gradient(left, #25231e 0%, $middle_color 30%, $center_color 50%, $middle_color 70%, #25231e 100%); // IE10+
+  background: linear-gradient(to right, #25231e 0%, $middle_color 30%, $center_color 50%, $middle_color 70%, #25231e 100%); // W3C
+}
+.playing_field{
+  padding:10px;
+  position: relative;
+  display:inline-block;
+  margin-left:-342px;
+  margin-top:-342px;
+  left:50%;
+  top:50%;
+}
+.field_string{
+	width:$field_size;
+}
+
+.field_item{
+  width:50px;
+  height:50px;
+  display:inline-block;
+  position: relative;
+  display:inline-block;
+  border:1px solid #9D8B7A;
+  border-left:none;
+}
+.field_item:first-child{
+  border-left:1px solid #9D8B7A;
+}
+.field_item:first-child:before{
+  display:none;
+}
+.field_string:first-child .field_item:before{
+  display:none;
+}
+.field_string .field_item{
+  border-top:none;
+  position: relative;
+}
+.field_string .field_item:before{
+  width: 8px;
+  height: 8px;
+  border-radius: 10px;
+  content: " ";
+  background: #AB9886;
+  position: absolute;
+  left: -4px;
+  top: -4px;
+}
+.field_string:first-child .field_item{
+  border-top:1px solid #9D8B7A;
+}
+.field_item:after{
+  position: absolute;
+  left:0;
+  top:0;
+  width:50px;
+  height:50px;
+  line-height: 50px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: bold;
+  font-family: 'Open Sans', sans-serif;
+}
+.one:after{
+	content:"1";
+  	color:orange;
+}
+.two:after{
+  content:"2";
+  color:deeppink;
+}
+.three:after{
+  content:"3";
+  color:dodgerblue;
+}
+.four:after{
+  content:"4";
+  color:slateblue;
+}
+.five:after{
+  content:"5";
+  color:green;
+}
+.six:after{
+  content:"6";
+  color:orangered;
+}
+.border>div{
+	position: absolute;
+}
+.border .left,
+.border .right {
+  width: 10px;
+  height: 100%;
+
+}
+.border .left{
+  top:0;
+  left:0;
+  @include gradient_top_bottom(#023F98,#2c3143 );
+}
+.border .right{
+  top:0;
+  right:0;
+  @include gradient_top_bottom(#882616,#411E19 );
+}
+
+.border .top,
+.border .bottom {
+  width: 100%;
+  height: 10px;
+
+}
+.border .top{
+  top:0;
+  left:0;
+  @include gradient_left_right(#608617,#39411E );
+}
+.border .bottom{
+  bottom:0;
+  right:0;
+  @include gradient_left_right(#CBB45F,#796543 );
+}
+// Chips styles---------------------------------------------------------
+.chip{
+  width: 35%;
+  height: 35%;
+  border-radius: 50%;
+  z-index: 1;
+  position: relative;
+  top: 2%;
+  left: 2%;
+  border: 15px solid #000;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

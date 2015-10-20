@@ -1,3 +1,5 @@
+
+// Шаблон интерактивного объекта
 function Operand() {
   this.point = null;
   this.conflicts = [];
